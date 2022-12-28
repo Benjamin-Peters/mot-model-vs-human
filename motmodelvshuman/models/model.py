@@ -1,3 +1,4 @@
 class MotModel:
     name = 'testmodel'
-    pass
+    def __init__(self, name, **kwargs):
+        self.name = name

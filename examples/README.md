@@ -9,7 +9,7 @@ experiment_name = 'Experiment1'
 
 models = [MotModel('sort'), MotModel('deepsort')]
 stimuli = Stimuli(experiment_name)
-human_responses = HumanData(experiment_name)
+human_responses = HumanResponses(experiment_name)
 
 evaluate_models(models, stimuli, human_responses, out_path=out_path)
 
