@@ -1,7 +1,7 @@
 from pathlib import Path
 import requests
 import zipfile
-
+import pandas as pd
 
 LOCAL_HUMAN_RESPONSES = Path('./data/human_responses')
 LOCAL_STIMULI = Path('./data/stimuli')
@@ -55,12 +55,13 @@ class Stimuli(Data):
         download_stimuli(download_again=download_again)
         self.data_path = LOCAL_STIMULI / self.experiment
         
-class HumanResponses(Data):
+class HumanResponses(pd.DataFrame, Data):
     
     def download_data(self, download_again: bool = False):
         download_human_responses(download_again=download_again)
         self.data_path = LOCAL_HUMAN_RESPONSES / self.experiment
 
+        # TODO: set pandas dataframe with downloaded csv file
 
         
         
