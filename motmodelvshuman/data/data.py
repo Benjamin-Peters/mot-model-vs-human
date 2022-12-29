@@ -1,67 +1,79 @@
 from pathlib import Path
+import shutil
+from tqdm.auto import tqdm
 import requests
 import zipfile
 import pandas as pd
 
 LOCAL_HUMAN_RESPONSES = Path('./data/human_responses')
+LOCAL_MODEL_OUTPUTS = Path('./data/model_outputs')
 LOCAL_STIMULI = Path('./data/stimuli')
 
-HUMAN_RESPONSES_URL = 'https://osf.io/download/XXXXX/' # zip file
-STIMULI_URL = 'https://osf.io/download/XXXXX/' # zip file
+HUMAN_RESPONSES_URL = {'experiment1': 'https://osf.io/download/XXXXX/',
+                       'experiment2': 'https://osf.io/download/XXXXX/'}
 
-def download_stimuli(download_again:bool=False):
+MODEL_OUTPUTS_URL = {'experiment1': 'https://osf.io/download/ws9cd/',
+                     'experiment2': 'https://osf.io/download/kswbx/'}
 
+STIMULI_URL = {'experiment1': 'https://osf.io/download/XXXXX/',
+               'experiment2': 'https://osf.io/download/XXXXX/'}
+
+def download(url, folder, download_again:bool=False):
+    
     if download_again:
-        LOCAL_STIMULI.rmdir()
+        shutil.rmtree(folder)
 
-    if not LOCAL_STIMULI.exists():
-        LOCAL_STIMULI.mkdir()
+    if not folder.exists():
+        print(f"Downloading data from {url} to {folder}...")
         
-        response = requests.get(STIMULI_URL)
-        with open("stimuli.zip", "wb") as f:
-            f.write(response.content)
-        # unzip file to LOCAL_STIMULI folder:
+        folder.mkdir(parents=True, exist_ok=True)
         
-        with zipfile.ZipFile("stimuli.zip", 'r') as zip_ref:
-            zip_ref.extractall(LOCAL_STIMULI)
+        # download zip file
+        print(url)
+        response = requests.get(url, stream=True)
+        with open("data.zip", "wb") as f:
+            for chunk in tqdm(response.iter_content(chunk_size=1024), total=int(response.headers.get('Content-Length', 0))/1024):
+                f.write(chunk)
             
-def download_human_responses(download_again:bool=False):
-    
-    if download_again:
-        LOCAL_HUMAN_RESPONSES.rmdir()
-    
-    if not LOCAL_HUMAN_RESPONSES.exists():
-        LOCAL_HUMAN_RESPONSES.mkdir()
-        
-        response = requests.get(HUMAN_RESPONSES_URL)
-        with open("human_responses.zip", "wb") as f:
-            f.write(response.content)
-        # unzip file to LOCAL_HUMAN_RESPONSES folder:
-        
-        with zipfile.ZipFile("human_responses.zip", 'r') as zip_ref:
-            zip_ref.extractall(LOCAL_HUMAN_RESPONSES)        
+        # unzip file to LOCAL_HUMAN_RESPONSES folder
+        with zipfile.ZipFile("data.zip", 'r') as zip_ref:
+            zip_ref.extractall(folder)
+            
+        # delete zip file
+        Path('data.zip').unlink()    
     
 class Data:
+    url = None
+    folder = None    
     def __init__(self, experiment:str, download_again:bool=False):        
         self.experiment = experiment
-        self.download_data(download_again=download_again)
-        
-    def download_data(self, download_again:bool=False):  
+        download(self.url[experiment], self.folder, download_again=download_again)
+        self.read_data()
+    def read_data(self):
         pass
-
+        
+        
 class Stimuli(Data):
-    
-    def download_data(self, download_again: bool = False):
-        download_stimuli(download_again=download_again)
-        self.data_path = LOCAL_STIMULI / self.experiment
-        
+    url = STIMULI_URL
+    folder = LOCAL_STIMULI
+            
 class HumanResponses(Data):
-    def download_data(self, download_again: bool = False):
-        download_human_responses(download_again=download_again)
-        self.data_path = LOCAL_HUMAN_RESPONSES / f'{self.experiment}.csv'
-
-        # TODO: set pandas dataframe with downloaded csv file
-        self.df = pd.read_csv(self.data_path, index_col=[0,1])
-
+    url = HUMAN_RESPONSES_URL
+    folder = LOCAL_HUMAN_RESPONSES
+    def read_data(self):
+        self.data_path = self.folder / self.experiment / f"{self.experiment}_responses.csv"
+        self.data = pd.read_csv(self.data_path, index_col=[0,1])
         
+class ModelOutputs(Data):
+    url = MODEL_OUTPUTS_URL
+    folder = LOCAL_MODEL_OUTPUTS
+    def __init__(self, experiment:str, model_name:str, download_again:bool=False):        
+        self.experiment = experiment
+        self.model_name = model_name
+        download(self.url[experiment], self.folder, download_again=download_again)
+        self.read_data()    
+    def read_data(self):
+        self.data_path = self.folder / self.experiment / f"{self.model_name}_{self.experiment}.pkl"
+        self.data = pd.read_pickle(self.data_path)
+                
         
