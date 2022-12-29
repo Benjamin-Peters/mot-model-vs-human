@@ -55,13 +55,13 @@ class Stimuli(Data):
         download_stimuli(download_again=download_again)
         self.data_path = LOCAL_STIMULI / self.experiment
         
-class HumanResponses(pd.DataFrame, Data):
-    
+class HumanResponses(Data):
     def download_data(self, download_again: bool = False):
         download_human_responses(download_again=download_again)
-        self.data_path = LOCAL_HUMAN_RESPONSES / self.experiment
+        self.data_path = LOCAL_HUMAN_RESPONSES / f'{self.experiment}.csv'
 
         # TODO: set pandas dataframe with downloaded csv file
+        self.df = pd.read_csv(self.data_path, index_col=[0,1])
 
         
         
