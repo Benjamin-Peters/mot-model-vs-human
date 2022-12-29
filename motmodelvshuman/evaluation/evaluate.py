@@ -1,15 +1,13 @@
-from typing import Union
+from typing import Union, List
+import json
+import pickle
 
 import pandas as pd
 import numpy as np
 
-# models = [MotModel('sort'), MotModel('deepsort')]
-# stimuli = Stimuli('experiment1')
-
-from ..data import Stimuli, HumanResponses
-from ..models import MotModel
-from ..models import model_inference, MotModel
+from ..data import Stimuli, HumanResponses, ModelOutput
 from .plots import plot_accuracy
+from .response_models import simple_response as response_model
 
 from pathlib import Path
 LOCAL_MODEL_OUTPUTS = Path('./data/model_outputs')
@@ -26,13 +24,95 @@ MAX_N_TARGETS = 4
 class ModelResponses(pd.DataFrame):
     pass
 
-def response_from_output(model_output) -> ModelResponses:
+MODEL_OUTPUT_COLUMNS = ['bpid', 
+                'frame_idx', 
+                'obj_id', 
+                'bbox_left', 'bbox_top',
+                'bbox_w','bbox_h',
+                'pred_conf']
+
+def format_model_output(model_output: ModelOutput,
+                      annotation_file_path: Path,
+                      ) -> pd.DataFrame :
+    
+    # load annotations from stimuli
+    annotations_json = json.load(open(annotation_file_path, 'r'))
+    
+    videos = annotations_json['videos']
+    video_ids = [vid['id'] for vid in videos]
+    video_names = {video['id']:video['name'] for video in videos}
+    
+    assert len(np.unique(list(video_names.values()))) == len(list(video_names.values())), "video names need to be unique (the video name should be the unique blueprint id)"
+    for vid_name in video_names.values():
+        assert vid_name.startswith('BPID'), f'video name {vid_name} does not start with BPID (seems like not part of an experiment)'
+    
+    images_by_video_id = {}
+    for vid in video_ids:
+        images_by_video_id[vid] = [x for x in annotations_json['images'] if x['video_id'] == vid]
+    video_lengths = {vid: len(images_by_video_id[vid]) for vid in video_ids}
+    
+    video_name_per_image = [video_names[image['video_id']] for image in annotations_json['images']]
+    mot_frame_id_per_image = [image['mot_frame_id'] for image in annotations_json['images']]
+    
+    # images_by_video_id[vid] contains 'id', 'video_id', 'file_name', 'width', 'height', 'frame_id', 'mot_frame_id'
+    
+    # make sure the video starts with the first frame (mot_frame_id = 0) 
+    # - this is for flying objects only and to make sure that the full video
+    # has been evaluated (not just a subset of it - when using "half-")    
+    for vid in video_ids:
+        # if images_by_video_id[vid][0]['mot_frame_id'] != 0:
+        if images_by_video_id[vid][0]['mot_frame_id'] != 1:
+            err_str = f"video {vid} does not start with frame 1 - you may need to regenerate the dataset with 1-based frame indexing (warning in evaluation.model_output.tracker_output_to_fo_responses.mmtracking_to_tracker_output)"
+            raise ValueError(err_str)
+        
+    # 2) load and parse results
+    assert len(model_output.data['track_bboxes']) == sum(video_lengths.values()), f"number of frames in results ({len(model_output.data['track_bboxes'])}) does not match number of frames in annotations ({sum(video_lengths.values())}) for files {annotation_file_path}"
+        
+    rows = []
+    model_output_formatted = pd.DataFrame(columns=MODEL_OUTPUT_COLUMNS +['score'])
+    for frame_idx, frame, video_name in zip(mot_frame_id_per_image, model_output.data['track_bboxes'], video_name_per_image):
+        for detection in frame[0]:
+            track_id, bb_left, bb_top, bb_right, bb_bottom, score = detection # for some reason, the mmtracking does not output bbox width and height
+            bb_width = bb_right - bb_left
+            bb_height = bb_bottom - bb_top
+            # track = [x1, y1, x2, y2, score, track_id]
+            row = dict(bpid=video_name,
+                       frame_idx=frame_idx,
+                       obj_id=track_id,
+                       bbox_left=bb_left,
+                       bbox_top=bb_top,
+                       bbox_w=bb_width,
+                       bbox_h=bb_height,
+                       pred_conf=score)
+            rows.append(row)
+    model_output_formatted = model_output_formatted.append(rows, ignore_index=True)
+    print(str(model_output.model_name))
+    model_output_formatted.model_name = model_output.model_name
+    return model_output_formatted
+            
+def response_from_output(model_output_formatted: pd.DataFrame, stimuli: Stimuli, n_runs: int = 10, out_path:Path=None) -> ModelResponses:
     """
         Convert model output to human-like responses
     """
-    # needto use code from here?
-    # Python/evaluation/model_output/tracker_output_to_fo_responses.py
-    pass
+    
+    with open(stimuli.experimental_session_file, 'r') as fin:
+        blueprints = json.load(fin)
+    
+    responses = response_model(model_output_formatted, 
+                    blueprints,
+                    n_runs=n_runs, 
+                    model_name=model_output_formatted.model_name,
+                    experimental_session_id=stimuli.experimental_session_id,
+                    first_frame = 20,
+                    # last_frame = 179,
+                    verbose=False)    
+    
+    responses['experimental_session_id'] = stimuli.experimental_session_id
+
+    if out_path is not None:
+        responses.to_csv(out_path, index=False)
+    
+    return responses    
 
 def get_factors(human_responses:HumanResponses) -> dict:
     df = human_responses.df
@@ -106,32 +186,30 @@ def compute_model_accuracy(model_responses: ModelResponses, factors:dict) -> tup
     return means, n
 
 
-def get_model_responses(model:MotModel, stimuli:Stimuli, factors:dict, out_path:str='./results'):
+def get_model_responses(model_output:ModelOutput, stimuli:Stimuli, factors:dict, out_path:str='./results'):
     """
-        1) run inference to produce model output
-        2) convert to human-like responses (from NeuroArcade/evaluation/model_output)
-        3) compute metrics for models and humans
-        4) save metrics
+        1) convert to human-like responses (from NeuroArcade/evaluation/model_output)
+        2) compute metrics for models and humans
+        3) save metrics
     """
     
-    # 1) run model inference (results will be stored at out_path / stimuli.name / model.name)
-    # model_output = model_inference(model, stimuli, out_path=full_out_path)
-    model_output_path = LOCAL_MODEL_OUTPUTS / stimuli.experiment / f"{model.name}_{stimuli.experiment}.pkl"
-    model_output = pd.read_pickle(model_output_path)
-
-    # 2) convert model output to human-like responses
-    model_output_path_csv = Path(out_path) / stimuli.experiment / f"{model.name}_{stimuli.experiment}.csv"
-    model_responses = response_from_output(model_output, out_path = model_output_path_csv)
+    model_output_path_csv = model_output.data_path.parent / (model_output.data_path.stem + '_responses.csv')
+    model_output_formatted = format_model_output(model_output, annotation_file_path = stimuli.annotations_json_path)
     
+    # 1) convert model output to human-like responses
+    model_responses = response_from_output(model_output_formatted, out_path = model_output_path_csv)
     
+    # 2) compute accuracy for model
     #metrics = {'model': model.name,  'accuracy': model_accuracy}
+    model_accuracy = None
+    n_runs = None
         
-    # 4) save metrics
+    # 3) save metrics
     # TODO save metrics to full_out_path
     
     return model_accuracy, n_runs
 
-def evaluate_models(models:list[MotModel], stimuli:Stimuli, human_responses: HumanResponses, out_path:str='./results'):
+def evaluate_models(model_outputs:List[ModelOutput], stimuli:Stimuli, human_responses: HumanResponses, out_path:str='./results'):
     """
     
         1) compute human accuracy

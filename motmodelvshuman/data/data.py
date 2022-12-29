@@ -56,7 +56,12 @@ class Data:
 class Stimuli(Data):
     url = STIMULI_URL
     folder = LOCAL_STIMULI
-            
+    def read_data(self):
+        self.data_path = self.folder / self.experiment
+        self.annotations_json_path = self.data_path / 'annotations' / 'train_cocoformat.json'
+        files = [f for f in (self.data_path / 'experimental_sessions').glob('**/*.json') if f.is_file()]
+        self.experimental_session_id = [f.stem for f in files][0]
+        self.experimental_session_file = self.data_path / 'experimental_sessions' / f"{self.experimental_session_id}.json"
 class HumanResponses(Data):
     url = HUMAN_RESPONSES_URL
     folder = LOCAL_HUMAN_RESPONSES
@@ -64,7 +69,7 @@ class HumanResponses(Data):
         self.data_path = self.folder / self.experiment / f"{self.experiment}_responses.csv"
         self.data = pd.read_csv(self.data_path, index_col=[0,1])
         
-class ModelOutputs(Data):
+class ModelOutput(Data):
     url = MODEL_OUTPUTS_URL
     folder = LOCAL_MODEL_OUTPUTS
     def __init__(self, experiment:str, model_name:str, download_again:bool=False):        
