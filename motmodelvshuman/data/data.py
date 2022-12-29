@@ -12,11 +12,11 @@ LOCAL_STIMULI = Path('./data/stimuli')
 HUMAN_RESPONSES_URL = {'experiment1': 'https://osf.io/download/XXXXX/',
                        'experiment2': 'https://osf.io/download/XXXXX/'}
 
-MODEL_OUTPUTS_URL = {'experiment1': 'https://osf.io/download/ws9cd/',
+MODEL_OUTPUTS_URL = {'experiment1': 'https://osf.io/download/fkzny/',
                      'experiment2': 'https://osf.io/download/kswbx/'}
 
-STIMULI_URL = {'experiment1': 'https://osf.io/download/gsk3v/',
-               'experiment2': 'https://osf.io/download/XXXXX/'}
+STIMULI_URL = {'experiment1': 'https://osf.io/download/52dt7/',
+               'experiment2': 'https://osf.io/download/gt3kj/'}
 
 def download(url, folder, download_again:bool=False):
     
