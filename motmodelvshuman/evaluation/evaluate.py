@@ -219,14 +219,12 @@ within_factors = {
 
 figure_contents = {
     'experiment1': {
-        "main" : True,
         "interactions" : [
             ["n_valued_objects", "occlusion_levels"],
             ["category_similarity", "occlusion_levels"]
         ]
     },
     'experiment2': {
-        "main" : True,
         "interactions" : [
             ["n_valued_objects", "occlusion_levels"],
             ["category_similarity", "occlusion_levels"],
@@ -263,7 +261,12 @@ def evaluate_models(model_outputs:List[ModelOutput], stimuli:Stimuli, human_resp
         accuracy[name], n[name] = compute_model_accuracy(model_responses, factors)
     
     # 3) create and save plots
-    plot_accuracy(experiment, accuracy, n, factors, figure_contents=figure_contents[experiment], out_path=out_path)
+    # main experiment figure
+    plot_accuracy(experiment, accuracy, n, factors, out_path, \
+        figure_contents=figure_contents[experiment], extended_interactions=False)
+
+    # appendix figure with all interactions (extended - models plotted separately)
+    plot_accuracy(experiment, accuracy, n, factors, out_path, extended_interactions=True)
     
     # 4) compute statistics
     withins = within_factors[stimuli.experiment]
