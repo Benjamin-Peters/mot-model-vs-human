@@ -6,8 +6,9 @@ import pandas as pd
 import numpy as np
 
 from ..data import Stimuli, HumanResponses, ModelOutput
-from .plots import plot_accuracy
 from .response_models import simple_response as response_model
+from .plots import plot_accuracy
+from .stats import calculate_anovas
 
 from pathlib import Path
 LOCAL_MODEL_OUTPUTS = Path('./data/model_outputs')
@@ -86,7 +87,6 @@ def format_model_output(model_output: ModelOutput,
                        pred_conf=score)
             rows.append(row)
     model_output_formatted = model_output_formatted.append(rows, ignore_index=True)
-    print(str(model_output.model_name))
     model_output_formatted.model_name = model_output.model_name
     return model_output_formatted
             
@@ -115,13 +115,12 @@ def response_from_output(model_output_formatted: pd.DataFrame, stimuli: Stimuli,
     return responses    
 
 def get_factors(human_responses:HumanResponses) -> dict:
-    df = human_responses.df
+    df = human_responses.data
     factors = {}
-    print(df)
     factors['n_valued_objects'] = np.sort(df.n_valued_objects.unique())
     factors['occlusion_levels'] = np.sort(df.occlusion_levels.unique())
     factors['category_similarity'] = np.sort(df.category_similarity.unique())
-    if 'n_distractor_objects' in df.columns: # this is only in experiment2
+    if human_responses.experiment == 'experiment2': # only experiment 2 has number of distractors as an experimental factor
         factors['n_distractor_objects'] = np.sort(df.n_distractor_objects.unique())
     return factors
 
@@ -133,18 +132,18 @@ def compute_human_accuracy(human_responses:HumanResponses, factors:dict) -> tupl
         Compute human accuracy for each factor level and return the mean accuracy
         as well as the number of subjects that pass the screening criteria
     """
-    df = human_responses.df
+    df = human_responses.data
     experiment = human_responses.experiment
     n_trials_screen_subjects = N_TRIALS_SCREEN_SUBJECTS[experiment]
 
     # selecting subjects
+    subjects = df.user_session_id.unique()
     selected_subjects = []
-    for user_session_id in df.index.get_level_values(0).unique():
-        print(user_session_id)
-        n_trials_done = len(df.xs(user_session_id, level=0))
+    for subject in subjects:
+        df_subject = df[df.user_session_id == subject]
+        n_trials_done = len(df_subject)
         if n_trials_done >= n_trials_screen_subjects:
-            selected_subjects.append(user_session_id)
-        print(f"{user_session_id} n_trials done: {n_trials_done}")
+            selected_subjects.append(subject)
 
     cols = [f'correct_{i}' for i in range(MAX_N_TARGETS)]
     df['correct'] = df[cols].mean(axis=1, skipna=True)
@@ -152,8 +151,9 @@ def compute_human_accuracy(human_responses:HumanResponses, factors:dict) -> tupl
     means_dims = tuple([len(levels) for levels in factors.values()])
     means = np.zeros((len(selected_subjects), *means_dims))
 
-    for index in np.ndindex((len(selected_subjects), *means_dims)):
-        row_sel = df.index.get_level_values(0) == selected_subjects[index[0]]
+    for index in np.ndindex(*means.shape):
+        #df_subject = df[df.user_session_id == selected_subjects[index[0]]]
+        row_sel = df.user_session_id == selected_subjects[index[0]]
         for j, (factor, levels) in enumerate(factors.items()):
             row_sel = row_sel & (df[factor] == levels[index[j+1]])
         means[index] = df[row_sel]['correct'].mean()
@@ -166,14 +166,13 @@ def compute_model_accuracy(model_responses: ModelResponses, factors:dict) -> tup
         Compute model accuracy for each factor level and return the mean accuracy
         as well as the number of model runs
     """
-    df = model_responses.df
+    df = model_responses
 
     cols = [f'correct_{i}' for i in range(MAX_N_TARGETS)]
     df['correct'] = df[cols].mean(axis=1, skipna=True)
 
     n = len(df.run.unique())
     # print([len(levels) for (factor, levels) in factors])
-    print(factors.keys())
     means_dims = tuple([len(levels) for levels in factors.values()])
     means = np.zeros((n, *means_dims))
 
@@ -182,11 +181,12 @@ def compute_model_accuracy(model_responses: ModelResponses, factors:dict) -> tup
         for j, (factor, levels) in enumerate(factors.items()):
             row_sel = row_sel & (df[factor] == levels[index[j+1]])
         means[index] = df[row_sel]['correct'].mean()
-
+    
     return means, n
 
 
-def get_model_responses(model_output:ModelOutput, stimuli:Stimuli, factors:dict, out_path:str='./results'):
+#def get_model_responses(model_output:ModelOutput, stimuli:Stimuli, factors:dict, out_path:str='./results'):
+def get_model_responses(model_output:ModelOutput, stimuli:Stimuli):
     """
         1) convert to human-like responses (from NeuroArcade/evaluation/model_output)
         2) compute metrics for models and humans
@@ -195,19 +195,46 @@ def get_model_responses(model_output:ModelOutput, stimuli:Stimuli, factors:dict,
     
     model_output_path_csv = model_output.data_path.parent / (model_output.data_path.stem + '_responses.csv')
     model_output_formatted = format_model_output(model_output, annotation_file_path = stimuli.annotations_json_path)
-    
-    # 1) convert model output to human-like responses
-    model_responses = response_from_output(model_output_formatted, out_path = model_output_path_csv)
-    
-    # 2) compute accuracy for model
-    #metrics = {'model': model.name,  'accuracy': model_accuracy}
-    model_accuracy = None
-    n_runs = None
-        
-    # 3) save metrics
-    # TODO save metrics to full_out_path
-    
-    return model_accuracy, n_runs
+    model_responses = response_from_output(model_output_formatted, stimuli, out_path = model_output_path_csv)
+    return model_responses
+
+
+# TODO make sure we have the same factors as in paper
+within_factors = {
+    'experiment1': [
+        ['n_targets'],
+        ['occlusion'],
+        ['category_similarity'],
+        ['category_similarity', 'occlusion'],
+        ['n_targets', 'occlusion'],
+    ],
+    'experiment2': [
+        ['n_targets'],
+        ['occlusion'],
+        ['category_similarity'],
+        ['n_distractors'],
+        ['n_targets', 'n_distractors'],
+    ] 
+}
+
+figure_contents = {
+    'experiment1': {
+        "main" : True,
+        "interactions" : [
+            ["n_valued_objects", "occlusion_levels"],
+            ["category_similarity", "occlusion_levels"]
+        ]
+    },
+    'experiment2': {
+        "main" : True,
+        "interactions" : [
+            ["n_valued_objects", "occlusion_levels"],
+            ["category_similarity", "occlusion_levels"],
+            ["n_distractor_objects", "n_valued_objects"],
+        ]
+    }
+}
+
 
 def evaluate_models(model_outputs:List[ModelOutput], stimuli:Stimuli, human_responses: HumanResponses, out_path:str='./results'):
     """
@@ -219,25 +246,25 @@ def evaluate_models(model_outputs:List[ModelOutput], stimuli:Stimuli, human_resp
     
     """
 
-    assert stimuli.experiment == human_responses.experiment, "Stimuli and human responses must be from the same experiment"
-    
+    experiment = stimuli.experiment 
+    assert experiment == human_responses.experiment, "Stimuli and human responses must be from the same experiment"
+
     # 1) compute human accuracy
     factors = get_factors(human_responses)
+    print(factors)
     accuracy = {}
     n = {}
     accuracy["human"], n["human"] = compute_human_accuracy(human_responses, factors)
     
     # 2) for each model: get responses from mmtracking data and compute accuracy
-    # for model in models:
-    #     model_responses = get_model_responses(model, stimuli, factors, out_path=out_path)
-    #     accuracy[model.name], n[model.name] = compute_model_accuracy(model_responses, factors)
-        #metrics = evaluate_model(model, stimuli, human_responses, out_path=out_path)
-        #metrics_list.append(metrics)
+    for model_output in model_outputs:
+        model_responses = get_model_responses(model_output, stimuli)
+        name = model_output.model_name
+        accuracy[name], n[name] = compute_model_accuracy(model_responses, factors)
     
     # 3) create and save plots
-    plot_accuracy(stimuli.experiment, accuracy, n, factors, out_path=out_path)
+    plot_accuracy(experiment, accuracy, n, factors, figure_contents=figure_contents[experiment], out_path=out_path)
     
     # 4) compute statistics
-    # TODO
-        
-    pass
+    withins = within_factors[stimuli.experiment]
+    calculate_anovas(accuracy, n, factors, withins)

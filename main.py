@@ -18,7 +18,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--models', nargs='+', default=MODEL_NAMES, help='models to evaluate', choices=MODEL_NAMES)
-    parser.add_argument('--experiment_name', default='Experiment1', help='experiment name', choices=AVAILABLE_EXPERIMENTS)
+    parser.add_argument('--experiment_name', default='experiment1', help='experiment name', choices=AVAILABLE_EXPERIMENTS)
     args = parser.parse_args()
     
     main(args)

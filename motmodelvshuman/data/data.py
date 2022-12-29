@@ -62,23 +62,26 @@ class Stimuli(Data):
         files = [f for f in (self.data_path / 'experimental_sessions').glob('**/*.json') if f.is_file()]
         self.experimental_session_id = [f.stem for f in files][0]
         self.experimental_session_file = self.data_path / 'experimental_sessions' / f"{self.experimental_session_id}.json"
+
 class HumanResponses(Data):
     url = HUMAN_RESPONSES_URL
     folder = LOCAL_HUMAN_RESPONSES
     def read_data(self):
-        self.data_path = self.folder / self.experiment / f"{self.experiment}_responses.csv"
-        self.data = pd.read_csv(self.data_path, index_col=[0,1])
+        self.data_path = self.folder / f"{self.experiment}.csv"
+        self.data = pd.read_csv(self.data_path)
         
 class ModelOutput(Data):
     url = MODEL_OUTPUTS_URL
     folder = LOCAL_MODEL_OUTPUTS
-    def __init__(self, experiment:str, model_name:str, download_again:bool=False):        
+    def __init__(self, experiment:str, model_name:str, download_again:bool=False):
         self.experiment = experiment
         self.model_name = model_name
+        self.data_path = self.folder / self.experiment / f"{self.model_name}_{self.experiment}.pkl"
+
         download(self.url[experiment], self.folder, download_again=download_again)
         self.read_data()    
+
     def read_data(self):
-        self.data_path = self.folder / self.experiment / f"{self.model_name}_{self.experiment}.pkl"
         self.data = pd.read_pickle(self.data_path)
                 
         

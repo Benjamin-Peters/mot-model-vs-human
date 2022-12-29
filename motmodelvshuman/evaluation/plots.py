@@ -70,14 +70,14 @@ def fig_main(dataset_name, plot_dir, means, n, factors): #, colors):
     return
 
 
-def fig_interaction(factor_idx_1, factor_idx_2,
-                    dataset_name, interactions_dir, means, n, factors, colors):
+def fig_interaction(factor_1, factor_2,
+                    dataset_name, interactions_dir, means, n, factors, colors, expanded=False):
 
     # fig, axes = plt.subplots(1, len(means), figsize=(4*len(means), 3))
     fig, axes = plt.subplots(1, 2, figsize=(8, 3))
     
-    factor_1 = list(factors.keys())[factor_idx_1]
-    factor_2 = list(factors.keys())[factor_idx_2]
+    factor_idx_1 = list(factors.keys()).index(factor_1)
+    factor_idx_2 = list(factors.keys()).index(factor_2)
 
     print('creating interaction figure for factors', factor_1, factor_2)
 
@@ -146,30 +146,32 @@ def fig_interaction(factor_idx_1, factor_idx_2,
     plt.savefig(Path(interactions_dir) / f'{dataset_name}_interaction_{factor_1}_{factor_2}.pdf', bbox_inches='tight')
 
 
-def figs_interactions(dataset_name, plot_dir, means, n, factors, colors):
+def figs_interactions(dataset_name, plot_dir, means, n, factors, colors, figure_contents=None):
     interactions_dir = Path(plot_dir) / 'interactions'
     interactions_dir.mkdir(parents=True, exist_ok=True)
 
-    factor_idxs = list(range(len(factors)))
-    for factor_idx_1, factor_idx_2 in itertools.permutations(list(range(len(factors))), 2):
-        fig_interaction(factor_idx_1, factor_idx_2,
-                        dataset_name, interactions_dir, means, n, factors, colors)
-        
+    if figure_contents is None: # just doing all if not specified
+        interactions = list(itertools.permutations(factors, 2))
+    else:
+        interactions = figure_contents['interactions']
+
+    for interaction in interactions:
+        fig_interaction(*interaction, dataset_name, interactions_dir, means, n, factors, colors)
 
 
-def plot_accuracy(experiment:str, accuracy:dict, n:dict, factors:dict, out_path:str):
+def plot_accuracy(experiment:str, accuracy:dict, n:dict, factors:dict, out_path:str, figure_contents:dict=None):
     plot_dir = Path(out_path) / 'figures' / experiment
     plot_dir.mkdir(parents=True, exist_ok=True)
 
-    # cmap_names = ['Greys', 'Blues', 'Greens', 'Oranges', 'Purples', 'Reds']
     cmap_names = ['Blues', 'Greens', 'Oranges', 'Purples', 'Reds']
     colors = {}
 
     # plotting main results in single dimensions of factors
-    fig_main(experiment, plot_dir, accuracy, n, factors) #, colors)
+    if figure_contents["main"] or figure_contents is None:
+        fig_main(experiment, plot_dir, accuracy, n, factors) #, colors)
     
     for i, (factor, levels) in enumerate(factors.items()):
         colors[i] = plt.cm.get_cmap(cmap_names[i])(np.flipud(np.linspace(0.2, .8, len(levels))))
-    figs_interactions(experiment, plot_dir, accuracy, n, factors, colors)
+    figs_interactions(experiment, plot_dir, accuracy, n, factors, colors, figure_contents)
 
 
