@@ -17,8 +17,8 @@ MODEL_OUTPUTS_URL = {'experiment1': 'https://osf.io/download/x3bst/',
                      'experiment1_gating': 'https://osf.io/download/XXXXXXXXX/',  # TODO UPDATE LINK
                      'experiment1_noisy_reid': 'https://osf.io/download/XXXXXXXXXX/'} # TODO UPDATE LINK
 
-STIMULI_URL = {'experiment1': 'https://osf.io/download/52dt7/',
-               'experiment2': 'https://osf.io/download/gt3kj/'}
+STIMULI_URL = {'experiment1': 'https://osf.io/download/9t5qm/',
+               'experiment2': 'https://osf.io/download/jkaq5/'}
 
 def download(url, folder, experiment, download_again:bool=False):
     
