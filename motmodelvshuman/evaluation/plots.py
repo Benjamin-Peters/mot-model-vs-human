@@ -12,12 +12,13 @@ FACTORS_TEXT = {
 
 # LINESTYLES = ['solid', 'dashed', (0, (3, 1, 1, 1, 1, 1))]
 LINESTYLES = [ 'dashed', (0, (3, 1, 1, 1, 1, 1)), 'solid']
-MARKERS = ['*', 'o', 'X', 'D', '^', 's']
+MARKERS = ['*', 'o', 'X', 'D', '^', 's', 'v', 'p']
 YLIMS = [0.25, 1.02]
 
 MODEL_COLORS = plt.cm.get_cmap('Greys')(np.flipud(np.linspace(0.3, .8, 6)))
 
 LABELS_FONTSIZE = 16
+MODEL_NAMES_FONTSIZE = 10
 
 def plot_main(ax, means, factor_idx, factors, n, levels, xlabel, bar_width=0.12):
     # we want to keep dimension of the factor_idx
@@ -39,10 +40,7 @@ def plot_main(ax, means, factor_idx, factors, n, levels, xlabel, bar_width=0.12)
         ms = np.mean(means[name], axis=dims)
         x_shift = - bar_width/2*len(means.keys()) + i*bar_width
         x = np.arange(len(levels))+ x_shift
-        if 'deepsort' in name:
-            model_simple_name = name
-        else:
-            model_simple_name = name.split('_')[0]
+        model_simple_name = name.split('-')[0]
         ax.bar(x, np.mean(ms, axis=0), bar_width, color=MODEL_COLORS[i-2],
                 yerr=np.std(ms, axis=0)/np.sqrt(n[name]))
         ax.scatter(x, (YLIMS[0]+0.05)*np.ones(len(x)), marker=MARKERS[i-2], color='black', s=15, label=f'{model_simple_name} ({n[name]} runs)')
@@ -90,7 +88,7 @@ def fig_interactions(interactions, experiment, interactions_dir, means, n, facto
             ms = np.mean(means['human'], axis=dims_reduce)
             ax = axes[i,0] if len(interactions) > 1 else axes[0]
             if i == 0:
-                ax.set_title(f'humans ({n_subjects} subjects)', fontsize=LABELS_FONTSIZE, fontweight="bold")
+                ax.set_title(f'humans ({n_subjects} subjects)', fontsize=MODEL_NAMES_FONTSIZE, fontweight="bold")
             for j, factor_2_level in enumerate(factors[factor_2]):
                 x = np.arange(len(factors[factor_1]))
                 y = np.mean(ms.take(j, axis=factor_2_idx_ms), axis=0)
@@ -117,7 +115,7 @@ def fig_interactions(interactions, experiment, interactions_dir, means, n, facto
                     label = FACTORS_TEXT[factor_2][k]
                 else:
                     label = f'{factor_2} {factor_2_level}'
-                model_simple_name = model_name.split('_')[0]
+                model_simple_name = model_name.split('-')[0]
                 if extended_interactions:
                     ax = axes[i,j+1] if len(interactions) > 1 else axes[j+1]
                 else:
@@ -127,7 +125,7 @@ def fig_interactions(interactions, experiment, interactions_dir, means, n, facto
                                 label=f'{model_simple_name}')
                 if i == 0:
                     name = 'models' if not extended_interactions else f'{model_simple_name}'
-                    ax.set_title(name, fontsize=LABELS_FONTSIZE, fontweight="bold")
+                    ax.set_title(name, fontsize=MODEL_NAMES_FONTSIZE, fontweight="bold")
             
         for j in range(n_cols):
             ax = axes[i,j] if n_rows > 1 else axes[j]
@@ -172,7 +170,7 @@ def plot_accuracy(experiment:str, accuracy:dict, n:dict, factors:dict, out_path:
     extended_str = '_extended' if extended_interactions else ''
     interactions_dir = Path(plot_dir) / f'interactions{extended_str}'
     interactions_dir.mkdir(parents=True, exist_ok=True)
-    if figure_contents is None: # just doing all if not specified
+    if figure_contents is None: # just doing all if specific interactions are not specified
         interactions = list(itertools.permutations(factors, 2))
         fig_interactions(interactions, experiment, interactions_dir, accuracy, n, factors, colors, figure_contents, extended_interactions=True)
     else:

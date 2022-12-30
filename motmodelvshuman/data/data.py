@@ -13,7 +13,9 @@ HUMAN_RESPONSES_URL = {'experiment1': 'https://osf.io/download/k65qe/',
                        'experiment2': 'https://osf.io/download/3kgxr/'}
 
 MODEL_OUTPUTS_URL = {'experiment1': 'https://osf.io/download/x3bst/',
-                     'experiment2': 'https://osf.io/download/e645p/'}
+                     'experiment2': 'https://osf.io/download/e645p/',
+                     'experiment1_gating': 'https://osf.io/download/XXXXXXXXX/',  # TODO UPDATE LINK
+                     'experiment1_noisy_reid': 'https://osf.io/download/XXXXXXXXXX/'} # TODO UPDATE LINK
 
 STIMULI_URL = {'experiment1': 'https://osf.io/download/9t5qm/',
                'experiment2': 'https://osf.io/download/jkaq5/'}
@@ -74,14 +76,10 @@ class HumanResponses(Data):
 class ModelOutput(Data):
     url = MODEL_OUTPUTS_URL
     folder = LOCAL_MODEL_OUTPUTS
-    def __init__(self, experiment:str, model_name:str, additional_model_id:str=None, download_again:bool=False):        
+    def __init__(self, experiment:str, model_name:str, download_again:bool=False):        
         self.experiment = experiment
         self.model_name = model_name
-        self.additional_model_id = additional_model_id
-        if self.additional_model_id is None:
-            self.data_path = self.folder / self.experiment / f"{self.model_name}_{self.experiment}.pkl"
-        else:
-            self.data_path = self.folder / self.experiment / f"{self.model_name}_{self.experiment}_{self.additional_model_id}.pkl"
+        self.data_path = self.folder / self.experiment / f"{self.model_name}-{self.experiment}.pkl"
 
         download(self.url[experiment], self.folder, self.experiment, download_again=download_again)
         self.read_data()    

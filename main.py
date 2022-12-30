@@ -1,25 +1,40 @@
-import argparse
-from motmodelvshuman import Stimuli, HumanResponses, ModelOutput
-from motmodelvshuman import evaluate_models
-from motmodelvshuman import AVAILABLE_MODELS, ADDITIONAL_MODEL_IDS
+from motmodelvshuman import Stimuli, HumanResponses, ModelOutput, evaluate_models
+from motmodelvshuman import MAIN_MODELS, GATING_MODELS, NOISY_REID_MODELS
 
-def main(models, experiment_name, additional_model_ids):
-    out_path = './results'
 
-    model_outputs = [ModelOutput(experiment=experiment_name, model_name=model_name, additional_model_id=additional_model_id) for model_name in models for additional_model_id in additional_model_ids]
-    stimuli = Stimuli(experiment_name)
-    human_responses = HumanResponses(experiment_name)
+MODEL_NAMES = {
+    'experiment1': MAIN_MODELS,
+    'experiment2': MAIN_MODELS,
+    'experiment1_gating': GATING_MODELS,
+    'experiment1_noisy_reid': NOISY_REID_MODELS
+}
 
-    evaluate_models(model_outputs, stimuli, human_responses, out_path=out_path)
+STIMULI_HUMAN_RESPONSES = {
+    'experiment1': 'experiment1',
+    'experiment2': 'experiment2',
+    'experiment1_gating': 'experiment1',
+    'experiment1_noisy_reid': 'experiment1'
+}
+
+def main(experiment):
+    model_names = MODEL_NAMES[experiment]
+    model_outputs = [ModelOutput(experiment=experiment, model_name=model_name) for model_name in model_names]
+
+    stimuli = Stimuli(experiment=STIMULI_HUMAN_RESPONSES[experiment])
+    human_responses = HumanResponses(experiment=STIMULI_HUMAN_RESPONSES[experiment])
+    evaluate_models(experiment, model_outputs, stimuli, human_responses, out_path='./results')
+
+
+if __name__ == '__main__':
+    # Figure 2
+    main('experiment1')
+
+    # Figure 3
+    main('experiment2')
+
+    # Figure 4 part 1
+    main('experiment1_gating')
+
+    # Figure 4 part 2
+    main('experiment1_noisy_reid')
     
-    
-if __name__ == '__main__':   
-    
-    # Figure 2:
-    main(AVAILABLE_MODELS, 'experiment1')
-    # Figure 3:
-    main(AVAILABLE_MODELS, 'experiment2')
-    # Figure 4:
-    main(['deepsort'], 'experiment1', ADDITIONAL_MODEL_IDS)
-    # Supplementary Figure 1:
-    # TODO

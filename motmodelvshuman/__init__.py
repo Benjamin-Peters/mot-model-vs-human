@@ -1,6 +1,2 @@
-from .data import Stimuli, HumanResponses, ModelOutput, AVAILABLE_EXPERIMENTS
-from .evaluation import evaluate_models
-
-
-AVAILABLE_MODELS = ['deepsort', 'sort', 'ocsort', 'bytetrack']
-ADDITIONAL_MODEL_IDS = ['nomotiongating', 'nomotiongating_gtreid'] #TODO
+from .data import Stimuli, HumanResponses, ModelOutput, EXPERIMENTS
+from .models import MAIN_MODELS, GATING_MODELS, NOISY_REID_MODELS

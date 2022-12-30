@@ -200,7 +200,7 @@ def get_model_responses(model_output:ModelOutput, stimuli:Stimuli):
 
 
 # TODO make sure we have the same factors as in paper
-within_factors = {
+WITHIN_FACTORS = {
     'experiment1': [
         ['n_targets'],
         ['occlusion'],
@@ -217,7 +217,7 @@ within_factors = {
     ] 
 }
 
-figure_contents = {
+FIGURE_CONTENTS = {
     'experiment1': {
         "interactions" : [
             ["n_valued_objects", "occlusion_levels"],
@@ -230,26 +230,22 @@ figure_contents = {
             ["category_similarity", "occlusion_levels"],
             ["n_distractor_objects", "n_valued_objects"],
         ]
-    }
+    },
 }
 
 
-def evaluate_models(model_outputs:List[ModelOutput], stimuli:Stimuli, human_responses: HumanResponses, out_path:str='./results'):
+def evaluate_models(experiment:str, model_outputs:List[ModelOutput], stimuli:Stimuli, human_responses: HumanResponses, out_path:str='./results'):
     """
-    
         1) compute human accuracy
         2) for each model: compute accuracy via evaluate_model
         3) create and save plots
         4) compute statistics
-    
     """
 
-    experiment = stimuli.experiment 
-    assert experiment == human_responses.experiment, "Stimuli and human responses must be from the same experiment"
+    assert stimuli.experiment == human_responses.experiment, "Stimuli and human responses must be from the same experiment"
 
     # 1) compute human accuracy
     factors = get_factors(human_responses)
-    print(factors)
     accuracy = {}
     n = {}
     accuracy["human"], n["human"] = compute_human_accuracy(human_responses, factors)
@@ -258,16 +254,17 @@ def evaluate_models(model_outputs:List[ModelOutput], stimuli:Stimuli, human_resp
     for model_output in model_outputs:
         model_responses = get_model_responses(model_output, stimuli)
         name = model_output.model_name
+        print(name)
         accuracy[name], n[name] = compute_model_accuracy(model_responses, factors)
     
     # 3) create and save plots
     # main experiment figure
     plot_accuracy(experiment, accuracy, n, factors, out_path, \
-        figure_contents=figure_contents[experiment], extended_interactions=False)
+        figure_contents=FIGURE_CONTENTS[stimuli.experiment], extended_interactions=False)
 
     # appendix figure with all interactions (extended - models plotted separately)
     plot_accuracy(experiment, accuracy, n, factors, out_path, extended_interactions=True)
     
     # 4) compute statistics
-    withins = within_factors[stimuli.experiment]
-    calculate_anovas(accuracy, n, factors, withins)
+    if experiment in ["experiment1", "experiment2"]:
+        calculate_anovas(accuracy, n, factors, WITHIN_FACTORS[experiment])
