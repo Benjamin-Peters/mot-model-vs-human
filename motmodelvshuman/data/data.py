@@ -9,8 +9,8 @@ LOCAL_HUMAN_RESPONSES = Path('./data/human_responses')
 LOCAL_MODEL_OUTPUTS = Path('./data/model_outputs')
 LOCAL_STIMULI = Path('./data/stimuli')
 
-HUMAN_RESPONSES_URL = {'experiment1': 'https://osf.io/download/XXXXX/',
-                       'experiment2': 'https://osf.io/download/XXXXX/'}
+HUMAN_RESPONSES_URL = {'experiment1': 'https://osf.io/download/k65qe/',
+                       'experiment2': 'https://osf.io/download/3kgxr/'}
 
 MODEL_OUTPUTS_URL = {'experiment1': 'https://osf.io/download/fkzny/',
                      'experiment2': 'https://osf.io/download/kswbx/'}
