@@ -15,8 +15,8 @@ HUMAN_RESPONSES_URL = {'experiment1': 'https://osf.io/download/k65qe/',
 MODEL_OUTPUTS_URL = {'experiment1': 'https://osf.io/download/x3bst/',
                      'experiment2': 'https://osf.io/download/e645p/'}
 
-STIMULI_URL = {'experiment1': 'https://osf.io/download/52dt7/',
-               'experiment2': 'https://osf.io/download/gt3kj/'}
+STIMULI_URL = {'experiment1': 'https://osf.io/download/9t5qm/',
+               'experiment2': 'https://osf.io/download/jkaq5/'}
 
 def download(url, folder, experiment, download_again:bool=False):
     
