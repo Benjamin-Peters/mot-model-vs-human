@@ -1,23 +1,25 @@
 import argparse
 from motmodelvshuman import Stimuli, HumanResponses, ModelOutput
 from motmodelvshuman import evaluate_models
-from motmodelvshuman import AVAILABLE_EXPERIMENTS, AVAILABLE_MODELS
+from motmodelvshuman import AVAILABLE_MODELS, ADDITIONAL_MODEL_IDS
 
-def main(args):
+def main(models, experiment_name, additional_model_ids):
     out_path = './results'
 
-    model_outputs = [ModelOutput(experiment=args.experiment_name, model_name=model_name) for model_name in args.models]
-    stimuli = Stimuli(args.experiment_name)
-    human_responses = HumanResponses(args.experiment_name)
+    model_outputs = [ModelOutput(experiment=experiment_name, model_name=model_name, additional_model_id=additional_model_id) for model_name in models for additional_model_id in additional_model_ids]
+    stimuli = Stimuli(experiment_name)
+    human_responses = HumanResponses(experiment_name)
 
     evaluate_models(model_outputs, stimuli, human_responses, out_path=out_path)
     
     
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--models', nargs='+', default=AVAILABLE_MODELS, help='models to evaluate', choices=AVAILABLE_MODELS)
-    parser.add_argument('--experiment_name', default='experiment1', help='experiment name', choices=AVAILABLE_EXPERIMENTS)
-    parser.add_argument('--additional_models', action='store_true', help='whether to evaluate the additional models on experiment1')
-    args = parser.parse_args()
-    assert not args.additional_models or args.experiment_name == 'experiment1', "Additional models are only available for experiment1"
-    main(args)
+if __name__ == '__main__':   
+    
+    # Figure 2:
+    main(AVAILABLE_MODELS, 'experiment1')
+    # Figure 3:
+    main(AVAILABLE_MODELS, 'experiment2')
+    # Figure 4:
+    main(['deepsort'], 'experiment1', ADDITIONAL_MODEL_IDS)
+    # Supplementary Figure 1:
+    # TODO
