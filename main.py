@@ -1,9 +1,7 @@
 import argparse
-from motmodelvshuman import Stimuli, HumanResponses, ModelOutput, AVAILABLE_EXPERIMENTS
-from motmodelvshuman import MotModel, evaluate_models, AVAILABLE_MODELS
-
-MODEL_NAMES = AVAILABLE_MODELS
-EXPERIMENT_NAMES = AVAILABLE_EXPERIMENTS
+from motmodelvshuman import Stimuli, HumanResponses, ModelOutput
+from motmodelvshuman import evaluate_models
+from motmodelvshuman import AVAILABLE_EXPERIMENTS, AVAILABLE_MODELS
 
 def main(args):
     out_path = './results'
@@ -17,8 +15,9 @@ def main(args):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--models', nargs='+', default=MODEL_NAMES, help='models to evaluate', choices=MODEL_NAMES)
+    parser.add_argument('--models', nargs='+', default=AVAILABLE_MODELS, help='models to evaluate', choices=AVAILABLE_MODELS)
     parser.add_argument('--experiment_name', default='experiment1', help='experiment name', choices=AVAILABLE_EXPERIMENTS)
+    parser.add_argument('--additional_models', action='store_true', help='whether to evaluate the additional models on experiment1')
     args = parser.parse_args()
-    
+    assert not args.additional_models or args.experiment_name == 'experiment1', "Additional models are only available for experiment1"
     main(args)
