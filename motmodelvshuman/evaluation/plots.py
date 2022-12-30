@@ -70,98 +70,96 @@ def fig_main(dataset_name, plot_dir, means, n, factors): #, colors):
     return
 
 
-def fig_interaction(factor_idx_1, factor_idx_2,
-                    dataset_name, interactions_dir, means, n, factors, colors):
+def fig_interactions(interactions, experiment, interactions_dir, means, n, factors, colors, figure_contents=None, extended_interactions=False):
+    print('plotting interactions', interactions)
 
-    # fig, axes = plt.subplots(1, len(means), figsize=(4*len(means), 3))
-    fig, axes = plt.subplots(1, 2, figsize=(8, 3))
+    n_rows = len(interactions)
+    n_cols = len(means) if extended_interactions else 2
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4*n_cols, 4*n_rows), gridspec_kw={'hspace': 0.5})
+
+    for (i, (factor_1, factor_2)) in enumerate(interactions):
+        factor_idx_1 = list(factors.keys()).index(factor_1)
+        factor_idx_2 = list(factors.keys()).index(factor_2)
+
+        dims_reduce = tuple([d for d in range(1,len(factors)+1) if d != factor_idx_1+1 and d != factor_idx_2+1])
+        factor_2_idx_ms = 1 if factor_idx_2 < factor_idx_1 else 2 # we need to find which dimension color_dim corresponds to in the ms
     
-    factor_1 = list(factors.keys())[factor_idx_1]
-    factor_2 = list(factors.keys())[factor_idx_2]
+        # plot humans
+        if 'human' in means.keys():
+            n_subjects = n['human']
+            ms = np.mean(means['human'], axis=dims_reduce)
+            ax = axes[i,0] if len(interactions) > 1 else axes[0]
+            if i == 0:
+                ax.set_title(f'humans ({n_subjects} subjects)', fontsize=LABELS_FONTSIZE, fontweight="bold")
+            for j, factor_2_level in enumerate(factors[factor_2]):
+                x = np.arange(len(factors[factor_1]))
+                y = np.mean(ms.take(j, axis=factor_2_idx_ms), axis=0)
+                ystd = np.std(ms.take(j, axis=factor_2_idx_ms), axis=0)/np.sqrt(n['human'])
+                if factor_2 in FACTORS_TEXT:
+                    label = FACTORS_TEXT[factor_2][j]
+                else:
+                    label = f'{factor_2} {factor_2_level}'
+                ax.errorbar(x=x, y=y, yerr=ystd, color=colors[factor_idx_2][j], #linestyle=LINESTYLES[j],
+                                label=factor_2_level)
+                ax.legend(title=factor_2)
 
-    print('creating interaction figure for factors', factor_1, factor_2)
+        model_means = {k:v for k,v in means.items() if k != 'human'}
+        for j, (model_name, ms) in enumerate(model_means.items()):
+            ms = np.mean(ms, axis=dims_reduce)
+            x = np.arange(len(factors[factor_1]), dtype=float)
+            x_random_offset = np.random.normal(0, 0.025*len(x), size=len(x))
+            x += x_random_offset
 
-    dims_reduce = tuple([d for d in range(1,len(factors)+1) if d != factor_idx_1+1 and d != factor_idx_2+1])
-    factor_2_idx_ms = 1 if factor_idx_2 < factor_idx_1 else 2 # we need to find which dimension color_dim corresponds to in the ms
-    
-    # plot humans
-    if 'human' in means.keys():
-        n_subjects = n['human']
-        ms = np.mean(means['human'], axis=dims_reduce)
-        axes[0].set_title(f'humans ({n_subjects} subjects)', fontsize=LABELS_FONTSIZE)
-        for j, factor_2_level in enumerate(factors[factor_2]):
-            x = np.arange(len(factors[factor_1]))
-            y = np.mean(ms.take(j, axis=factor_2_idx_ms), axis=0)
-            ystd = np.std(ms.take(j, axis=factor_2_idx_ms), axis=0)/np.sqrt(n['human'])
-            if factor_2 in FACTORS_TEXT:
-                label = FACTORS_TEXT[factor_2][j]
-            else:
-                label = f'{factor_2} {factor_2_level}'
-            axes[0].errorbar(x=x, y=y, yerr=ystd, color=colors[factor_idx_2][j], #linestyle=LINESTYLES[j],
-                            label=factor_2_level)
-            axes[0].legend(title=factor_2)
+            for k, factor_2_level in enumerate(factors[factor_2]):
+                y = np.mean(ms.take(k, axis=factor_2_idx_ms), axis=0)
+                ystd = np.std(ms.take(k, axis=factor_2_idx_ms), axis=0)/np.sqrt(n[model_name])
+                if factor_2 in FACTORS_TEXT:
+                    label = FACTORS_TEXT[factor_2][k]
+                else:
+                    label = f'{factor_2} {factor_2_level}'
+                model_simple_name = model_name.split('_')[0]
+                if extended_interactions:
+                    ax = axes[i,j+1] if len(interactions) > 1 else axes[j+1]
+                else:
+                    ax = axes[i,1] if len(interactions) > 1 else axes[1]
+                ax.errorbar(x=x, y=y, yerr=ystd, color=colors[factor_idx_2][k],# linestyle=LINESTYLES[j],
+                                marker=MARKERS[j+1], markersize=5,
+                                label=f'{model_simple_name}')
+                if i == 0:
+                    name = 'models' if not extended_interactions else f'{model_simple_name}'
+                    ax.set_title(name, fontsize=LABELS_FONTSIZE, fontweight="bold")
+            
+        for j in range(n_cols):
+            ax = axes[i,j] if n_rows > 1 else axes[j]
+            ax.set_xticks(np.arange(len(factors[factor_1])), )
+            ax.set_xticklabels(factors[factor_1], fontsize=LABELS_FONTSIZE)
+            ax.set_xlabel(factor_1, fontsize=LABELS_FONTSIZE)
+            ax.set_ylim(YLIMS)
+            ax.tick_params(axis='y', labelsize=13)
+            
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            if j > 0:
+                ax.set_yticks([])
+                ax.spines['left'].set_visible(False)
 
-    model_count = 0
-    for i, (name, ms) in enumerate(means.items()):
-        
-        if name == 'human':
-            continue
+        ax = axes[i,0] if len(interactions) > 1 else axes[0]
+        ax.set_ylabel('accuracy', fontsize=LABELS_FONTSIZE)
 
-        ms = np.mean(ms, axis=dims_reduce)
-        x = np.arange(len(factors[factor_1]), dtype=float)
-        x_random_offset = np.random.normal(0, 0.025*len(x), size=len(x))
-        x += x_random_offset
+        #fig.suptitle(f'{experiment} interaction between {factor_1} and {factor_2}', fontsize=10, y=1.05)
 
-        for j, factor_2_level in enumerate(factors[factor_2]):
-            y = np.mean(ms.take(j, axis=factor_2_idx_ms), axis=0)
-            ystd = np.std(ms.take(j, axis=factor_2_idx_ms), axis=0)/np.sqrt(n[name])
-            if factor_2 in FACTORS_TEXT:
-                label = FACTORS_TEXT[factor_2][j]
-            else:
-                label = f'{factor_2} {factor_2_level}'
-            model_simple_name = name.split('_')[0]
-            axes[1].errorbar(x=x, y=y, yerr=ystd, color=colors[factor_idx_2][j],# linestyle=LINESTYLES[j],
-                            marker=MARKERS[model_count], markersize=5,
-                            label=f'{model_simple_name}')
-        model_count += 1
-    
-    axes[1].set_title('models', fontsize=LABELS_FONTSIZE)
+        if n_rows == 1:
+            plt.savefig(Path(interactions_dir) / f'{experiment}_interaction_{factor_1}_{factor_2}.pdf', bbox_inches='tight')
 
-    
-    for i in range(2):
-        axes[i].set_xticks(np.arange(len(factors[factor_1])), )
-        axes[i].set_xticklabels(factors[factor_1], fontsize=LABELS_FONTSIZE)
-        axes[i].set_xlabel(factor_1, fontsize=LABELS_FONTSIZE)
-        axes[i].set_ylim(YLIMS)
-        axes[i].tick_params(axis='y', labelsize=13)
-        
-        axes[i].spines['top'].set_visible(False)
-        axes[i].spines['right'].set_visible(False)
-        if i > 0:
-            axes[i].set_yticks([])
-            axes[i].spines['left'].set_visible(False)
-
-    axes[0].set_ylabel('accuracy', fontsize=LABELS_FONTSIZE)
-    fig.suptitle(f'{dataset_name} interaction between {factor_1} and {factor_2}', fontsize=10, y=1.05)
-    plt.savefig(Path(interactions_dir) / f'{dataset_name}_interaction_{factor_1}_{factor_2}.pdf', bbox_inches='tight')
-
-
-def figs_interactions(dataset_name, plot_dir, means, n, factors, colors):
-    interactions_dir = Path(plot_dir) / 'interactions'
-    interactions_dir.mkdir(parents=True, exist_ok=True)
-
-    factor_idxs = list(range(len(factors)))
-    for factor_idx_1, factor_idx_2 in itertools.permutations(list(range(len(factors))), 2):
-        fig_interaction(factor_idx_1, factor_idx_2,
-                        dataset_name, interactions_dir, means, n, factors, colors)
-        
+    if n_rows > 1:
+        plt.savefig(Path(interactions_dir) / f'{experiment}_interactions.pdf', bbox_inches='tight')
 
 
-def plot_accuracy(experiment:str, accuracy:dict, n:dict, factors:dict, out_path:str):
+def plot_accuracy(experiment:str, accuracy:dict, n:dict, factors:dict, out_path:str,
+                    figure_contents:dict=None, extended_interactions:bool=False):
     plot_dir = Path(out_path) / 'figures' / experiment
     plot_dir.mkdir(parents=True, exist_ok=True)
 
-    # cmap_names = ['Greys', 'Blues', 'Greens', 'Oranges', 'Purples', 'Reds']
     cmap_names = ['Blues', 'Greens', 'Oranges', 'Purples', 'Reds']
     colors = {}
 
@@ -170,6 +168,15 @@ def plot_accuracy(experiment:str, accuracy:dict, n:dict, factors:dict, out_path:
     
     for i, (factor, levels) in enumerate(factors.items()):
         colors[i] = plt.cm.get_cmap(cmap_names[i])(np.flipud(np.linspace(0.2, .8, len(levels))))
-    figs_interactions(experiment, plot_dir, accuracy, n, factors, colors)
+
+    extended_str = '_extended' if extended_interactions else ''
+    interactions_dir = Path(plot_dir) / f'interactions{extended_str}'
+    interactions_dir.mkdir(parents=True, exist_ok=True)
+    if figure_contents is None: # just doing all if not specified
+        interactions = list(itertools.permutations(factors, 2))
+        fig_interactions(interactions, experiment, interactions_dir, accuracy, n, factors, colors, figure_contents, extended_interactions=True)
+    else:
+        for interaction in figure_contents['interactions']:
+            fig_interactions([interaction], experiment, interactions_dir, accuracy, n, factors, colors, extended_interactions=False)
 
 

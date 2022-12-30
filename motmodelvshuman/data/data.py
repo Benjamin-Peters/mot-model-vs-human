@@ -63,12 +63,13 @@ class Stimuli(Data):
         self.experimental_session_id = [f.stem for f in files][0]
         self.experimental_session_file = self.data_path / 'experimental_sessions' / f"{self.experimental_session_id}.json"
 
+
 class HumanResponses(Data):
     url = HUMAN_RESPONSES_URL
     folder = LOCAL_HUMAN_RESPONSES
     def read_data(self):
         self.data_path = self.folder / f"{self.experiment}.csv"
-        self.data = pd.read_csv(self.data_path, index_col=[0,1])
+        self.data = pd.read_csv(self.data_path)
         
 class ModelOutput(Data):
     url = MODEL_OUTPUTS_URL
@@ -77,14 +78,15 @@ class ModelOutput(Data):
         self.experiment = experiment
         self.model_name = model_name
         self.additional_model_id = additional_model_id
+        if self.additional_model_id is None:
+            self.data_path = self.folder / self.experiment / f"{self.model_name}_{self.experiment}.pkl"
+        else:
+            self.data_path = self.folder / self.experiment / f"{self.model_name}_{self.experiment}_{self.additional_model_id}.pkl"
+
         download(self.url[experiment], self.folder, self.experiment, download_again=download_again)
         self.read_data()    
+
     def read_data(self):
-        if self.additional_model_id:
-            # e.g., additional_model_id = 'noisy-reid_1.55'
-            self.data_path = self.folder / self.experiment / f"{self.model_name}_{self.experiment}_{self.additional_model_id}.pkl"
-        else:
-            self.data_path = self.folder / self.experiment / f"{self.model_name}_{self.experiment}.pkl"
         self.data = pd.read_pickle(self.data_path)
                 
         
