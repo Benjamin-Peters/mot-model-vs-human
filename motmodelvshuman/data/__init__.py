@@ -1,2 +1,2 @@
 from .data import Stimuli, HumanResponses, ModelOutput
-AVAILABLE_EXPERIMENTS = ['experiment1', 'experiment2']
+EXPERIMENTS = ['experiment1', 'experiment2', 'experiment1_gating', 'experiment1_noisy_reid']

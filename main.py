@@ -1,24 +1,40 @@
-import argparse
-from motmodelvshuman import Stimuli, HumanResponses, ModelOutput, AVAILABLE_EXPERIMENTS
-from motmodelvshuman import MotModel, evaluate_models, AVAILABLE_MODELS
+from motmodelvshuman import Stimuli, HumanResponses, ModelOutput, evaluate_models
+from motmodelvshuman import MAIN_MODELS, GATING_MODELS, NOISY_REID_MODELS
 
-MODEL_NAMES = AVAILABLE_MODELS
-EXPERIMENT_NAMES = AVAILABLE_EXPERIMENTS
 
-def main(args):
-    out_path = './results'
+MODEL_NAMES = {
+    'experiment1': MAIN_MODELS,
+    'experiment2': MAIN_MODELS,
+    'experiment1_gating': GATING_MODELS,
+    'experiment1_noisy_reid': NOISY_REID_MODELS
+}
 
-    model_outputs = [ModelOutput(experiment=args.experiment_name, model_name=model_name) for model_name in args.models]
-    stimuli = Stimuli(args.experiment_name)
-    human_responses = HumanResponses(args.experiment_name)
+STIMULI_HUMAN_RESPONSES = {
+    'experiment1': 'experiment1',
+    'experiment2': 'experiment2',
+    'experiment1_gating': 'experiment1',
+    'experiment1_noisy_reid': 'experiment1'
+}
 
-    evaluate_models(model_outputs, stimuli, human_responses, out_path=out_path)
-    
-    
+def main(experiment):
+    model_names = MODEL_NAMES[experiment]
+    model_outputs = [ModelOutput(experiment=experiment, model_name=model_name) for model_name in model_names]
+
+    stimuli = Stimuli(experiment=STIMULI_HUMAN_RESPONSES[experiment])
+    human_responses = HumanResponses(experiment=STIMULI_HUMAN_RESPONSES[experiment])
+    evaluate_models(experiment, model_outputs, stimuli, human_responses, out_path='./results')
+
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--models', nargs='+', default=MODEL_NAMES, help='models to evaluate', choices=MODEL_NAMES)
-    parser.add_argument('--experiment_name', default='experiment1', help='experiment name', choices=AVAILABLE_EXPERIMENTS)
-    args = parser.parse_args()
+    # Figure 2
+    main('experiment1')
+
+    # Figure 3
+    main('experiment2')
+
+    # Figure 4 part 1
+    main('experiment1_gating')
+
+    # Figure 4 part 2
+    main('experiment1_noisy_reid')
     
-    main(args)
