@@ -12,10 +12,10 @@ LOCAL_STIMULI = Path('./data/stimuli')
 HUMAN_RESPONSES_URL = {'experiment1': 'https://osf.io/download/k65qe/',
                        'experiment2': 'https://osf.io/download/3kgxr/'}
 
-MODEL_OUTPUTS_URL = {'experiment1': 'https://osf.io/download/x3bst/',
-                     'experiment2': 'https://osf.io/download/e645p/',
-                     'experiment1_gating': 'https://osf.io/download/XXXXXXXXX/',  # TODO UPDATE LINK
-                     'experiment1_noisy_reid': 'https://osf.io/download/XXXXXXXXXX/'} # TODO UPDATE LINK
+MODEL_OUTPUTS_URL = {'experiment1': 'https://osf.io/download/fyhet/',
+                     'experiment2': 'https://osf.io/download/psa6u/',
+                     'experiment1_gating': 'https://osf.io/download/q3sa8/',  
+                     'experiment1_noisy_reid': 'https://osf.io/download/vr8xg/'} 
 
 STIMULI_URL = {'experiment1': 'https://osf.io/download/9t5qm/',
                'experiment2': 'https://osf.io/download/jkaq5/'}
