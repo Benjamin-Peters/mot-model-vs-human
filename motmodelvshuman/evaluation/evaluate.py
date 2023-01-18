@@ -86,7 +86,7 @@ def format_model_output(model_output: ModelOutput,
                        bbox_h=bb_height,
                        pred_conf=score)
             rows.append(row)
-    model_output_formatted = model_output_formatted.append(rows, ignore_index=True)
+    model_output_formatted = pd.concat([model_output_formatted, pd.DataFrame(rows)], axis=0, ignore_index=True)
     model_output_formatted.model_name = model_output.model_name
     return model_output_formatted
             

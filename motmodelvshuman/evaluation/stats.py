@@ -41,12 +41,12 @@ def anovas(means, n, factors, withins, human=True):
         category_similarity_idx = np.repeat(np.repeat(np.repeat(np.repeat(np.arange(ms.shape[3])[None, None, None, :, None], n_subjects, axis=0), n_target_object_levels, axis=1), n_occlusion_levels, axis=2), n_distractors_levels, axis=4)
         distractor_idx = np.repeat(np.repeat(np.repeat(np.repeat(np.arange(ms.shape[4])[None, None, None, None, :], n_subjects, axis=0), n_target_object_levels, axis=1), n_occlusion_levels, axis=2), n_category_similarity_levels, axis=3)
 
-        print(subject_idx.shape)
-        print(target_idx.shape)
-        print(occlusion_idx.shape)
-        print(category_similarity_idx.shape)
-        print(distractor_idx.shape)
-        print(ms.shape)
+        # print(subject_idx.shape)
+        # print(target_idx.shape)
+        # print(occlusion_idx.shape)
+        # print(category_similarity_idx.shape)
+        # print(distractor_idx.shape)
+        # print(ms.shape)
 
         df_anova = pd.DataFrame(dict(subject_idx=subject_idx.flatten(), 
                            n_targets=target_idx.flatten(),
@@ -57,7 +57,7 @@ def anovas(means, n, factors, withins, human=True):
     else:
         raise ValueError('factors should be either 3 or 4') 
 
-    print(df_anova)
+    # print(df_anova)
     
     for within in withins:
         anova(df_anova, within=within)

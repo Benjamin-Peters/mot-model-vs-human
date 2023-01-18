@@ -27,14 +27,18 @@ def main(experiment):
 
 if __name__ == '__main__':
     # Figure 2
+    print('==== Experiment 1 ====')
     main('experiment1')
 
     # Figure 3
+    print('==== Experiment 2 ====')
     main('experiment2')
 
     # Figure 4 part 1
+    print('==== Experiment 1 (gating) ====')
     main('experiment1_gating')
 
     # Figure 4 part 2
+    print('==== Experiment 1 (noisy reid) ====')
     main('experiment1_noisy_reid')
     
