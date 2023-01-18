@@ -199,7 +199,6 @@ def get_model_responses(model_output:ModelOutput, stimuli:Stimuli):
     return model_responses
 
 
-# TODO make sure we have the same factors as in paper
 WITHIN_FACTORS = {
     'experiment1': [
         ['n_targets'],

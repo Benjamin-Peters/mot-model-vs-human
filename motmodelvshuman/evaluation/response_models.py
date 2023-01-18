@@ -48,7 +48,6 @@ def get_position_trajectories(
                     target_str: str = 'Target',
                     distractor_str: str = 'Distractor',
                     occluder_str: str = 'Occluder'):
-    # TODO: for legacy there is this special function for position trajectories (should be removed from other importing scripts and replaced by get_trajectories)
     return get_trajectories(blueprint, object_name, 'position_trajectory', target_str, distractor_str, occluder_str)
 
 
