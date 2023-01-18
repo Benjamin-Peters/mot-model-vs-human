@@ -34,11 +34,11 @@ if __name__ == '__main__':
     print('==== Experiment 2 ====')
     main('experiment2')
 
-    # Figure 4 part 1
+    # Figure 7 (supplement)
     print('==== Experiment 1 (gating) ====')
     main('experiment1_gating')
 
-    # Figure 4 part 2
-    print('==== Experiment 1 (noisy reid) ====')
-    main('experiment1_noisy_reid')
+    # not included in paper
+    # print('==== Experiment 1 (noisy reid) ====')
+    # main('experiment1_noisy_reid')
     
