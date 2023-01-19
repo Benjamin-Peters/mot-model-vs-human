@@ -76,9 +76,9 @@ When running `main.py`, these model outputs are transformed into 'model response
 
 <table border="0" cellspacing="0" cellpadding="0"  style="border-collapse: collapse; border: none;">
  <tr  style="border: none;">
-    <td  style="border: none;"><img  width="150" height="150" src="img/1.gif"></td>
-    <td  style="border: none;"><img  width="150" height="150" src="img/2.gif"></td>
-    <td  style="border: none;"><img  width="150" height="150" src="img/3.gif"></td>
+    <td  style="border: none;"><img  width="150" height="150" src="https://github.com/Benjamin-Peters/mot-model-vs-human/blob/main/img/1.gif"></td>
+    <td  style="border: none;"><img  width="150" height="150" src="https://github.com/Benjamin-Peters/mot-model-vs-human/blob/main/img/2.gif"></td>
+    <td  style="border: none;"><img  width="150" height="150" src="https://github.com/Benjamin-Peters/mot-model-vs-human/blob/main/img/3.gif"></td>
  </tr >
 </table>
 
