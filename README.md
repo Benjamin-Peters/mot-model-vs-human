@@ -72,14 +72,18 @@ When running `main.py`, these model outputs are transformed into 'model response
 - As detailed in the supplement of the paper (i.e. Fig. 7), we removed the spatial gating from DeepSORT and evaluated the model output on Experiment 1. The model behavior is stored in `model_outputs/experiment1_gating/deepsort_nomotiongating-experiment1_gating.pkl`. 
 - As a sanity check we also evaluated the model with perfect appearance model (i.e., reid model), which lead to perfect performance on in all conditions. (`model_outputs/experiment1_gating/deepsort_nomotiongating_gtreid-experiment1_gating.pkl`)
 
-![img1](https://github.com/Benjamin-Peters/mot-model-vs-human/blob/main/img/1.gif)
+![img1](https://github.com/Benjamin-Peters/mot-model-vs-human/blob/main/img/1.gif?raw=True)
+
+<p>
+    <img src="../main/img/1.gif?raw=true" width="220" height="240" />
+</p>
 
 ## Example trajectories
 
 
 <table border="0" cellspacing="0" cellpadding="0"  style="border-collapse: collapse; border: none;">
  <tr  style="border: none;">
-    <td  style="border: none;"><img  width="150" height="150" src="https://github.com/Benjamin-Peters/mot-model-vs-human/blob/main/img/1.gif"></td> 
+    <td  style="border: none;"><img  width="150" height="150" src="img/1.gif"></td> 
     <td  style="border: none;"><img  width="150" height="150" src="https://github.com/Benjamin-Peters/mot-model-vs-human/blob/main/img/2.gif"></td>
     <td  style="border: none;"><img  width="150" height="150" src="https://github.com/Benjamin-Peters/mot-model-vs-human/blob/main/img/3.gif"></td>
  </tr >
